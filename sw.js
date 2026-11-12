@@ -1,5 +1,5 @@
-const CACHE = 'friends-badugi-v2026-11-12-pages';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'friends-badugi-v2026-11-12-mobile';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './mobile-polish.css'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
