@@ -1,0 +1,77 @@
+/* Keep all game controls inside the actual available mobile viewport.
+   The .compact-game-stage class is set using the game canvas height, not the
+   phone's unrotated CSS viewport height. */
+#app{height:var(--badugi-visible-height,100dvh);}
+@media (orientation:portrait) and (max-width:900px) and (pointer:coarse){
+  #app{
+    position:fixed;
+    top:0;
+    left:var(--badugi-visible-width,100dvw);
+    width:var(--badugi-visible-height,100dvh);
+    height:var(--badugi-visible-width,100dvw);
+    transform:rotate(90deg);
+    transform-origin:top left;
+  }
+}
+.gameShell{
+  display:grid;
+  height:100%;
+  min-height:0;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:clamp(39px,7vh,53px) minmax(0,1fr) clamp(48px,11vh,79px) clamp(27px,5.2vh,43px);
+  overflow:hidden;
+}
+.gameShell>.goldTop{grid-row:1;min-height:0;height:100%;align-self:stretch;}
+.gameShell>.roomBody{grid-row:2;min-height:0;height:100%;overflow:hidden;align-self:stretch;}
+.gameShell>.betDock{grid-row:3;min-height:0;max-height:none;height:100%;overflow:hidden;align-self:stretch;}
+.gameShell>.goldFooter{grid-row:4;min-height:0;height:100%;align-self:stretch;}
+.gameShell>.roomBody>.roomSeat{min-height:0;overflow:hidden;}
+.gameShell>.roomBody>.heroPlayer{min-height:0;overflow:hidden;}
+.gameShell .heroDetails .hand{min-height:0;}
+.gameShell .chatArea{min-height:0;}
+/* Actual stage height below 550px: tightened but still legible. */
+#app.compact-game-stage .gameShell{grid-template-rows:36px minmax(0,1fr) 49px 28px;}
+#app.compact-game-stage .goldTop{padding:2px 6px;gap:4px;}
+#app.compact-game-stage .goldBrand{font-size:clamp(12px,2.4vw,20px);}
+#app.compact-game-stage .goldTop button{font-size:clamp(9px,1.35vw,12px);padding:4px 5px;line-height:1;}
+#app.compact-game-stage .roomLabel{display:none;}
+#app.compact-game-stage .roomBody{padding:3px 5px;gap:3px;grid-template-rows:minmax(0,1fr) minmax(0,.87fr) minmax(0,1.45fr);}
+#app.compact-game-stage .roomSeat{padding:2px 3px;}
+#app.compact-game-stage .roomSeat .seatGrid{grid-template-rows:minmax(0,1fr) 12px 12px;column-gap:2px;row-gap:0;}
+#app.compact-game-stage .roomSeat .cutSlot{font-size:9px;line-height:1;padding:0 1px;}
+#app.compact-game-stage .roomSeat .chipUnder{font-size:clamp(9px,1.4vw,13px);line-height:1;}
+#app.compact-game-stage .roomSeat .seatStatus{min-height:0;max-height:12px;}
+#app.compact-game-stage .roomSeat .seatStatus .playStatus{font-size:9px;padding:0 3px;line-height:1;}
+#app.compact-game-stage .roomBody .potZone{gap:1px;padding:0;overflow:hidden;}
+#app.compact-game-stage .potZone .premiumChips{display:none!important;}
+#app.compact-game-stage .potZone .tableLogo{font-size:clamp(19px,2.8vw,29px);line-height:.9;}
+#app.compact-game-stage .potZone .tableLogo small{font-size:8px;}
+#app.compact-game-stage .potZone .tableLogo em{font-size:8px;padding:1px 6px;}
+#app.compact-game-stage .potZone .roundLine{font-size:clamp(8px,1.3vw,11px);padding:2px 4px;}
+#app.compact-game-stage .potZone .potInfo{font-size:clamp(10px,1.2vw,13px);padding:2px 5px;}
+#app.compact-game-stage .heroPlayer{padding:2px;gap:3px;}
+#app.compact-game-stage .heroAvatar{width:clamp(32px,8vw,66px);min-width:clamp(32px,8vw,66px);}
+#app.compact-game-stage .heroDetails{min-height:0;gap:1px;padding:0;grid-template-rows:auto minmax(0,1fr) auto auto;}
+#app.compact-game-stage .heroDetails .who{font-size:clamp(10px,1.45vw,13px);line-height:1;}
+#app.compact-game-stage .heroDetails .hand{padding-top:5px;}
+#app.compact-game-stage .heroDetails .hand .card{height:100%;min-height:0;}
+#app.compact-game-stage .heroDetails .eval{font-size:10px;padding:1px 4px;}
+#app.compact-game-stage .heroDetails>div:last-child{font-size:9px!important;line-height:1;}
+#app.compact-game-stage .chatTabs{height:22px;}
+#app.compact-game-stage .chatInput{height:27px;}
+#app.compact-game-stage .betDock{padding:3px 6px;gap:4px;}
+#app.compact-game-stage .betDock .action{font-size:clamp(12px,1.6vw,17px);padding:3px 1px;min-width:0;line-height:1.08;}
+#app.compact-game-stage .betDock .action small{font-size:clamp(9px,1vw,12px);line-height:1;}
+#app.compact-game-stage .goldFooter{padding:2px 6px;}
+#app.compact-game-stage .goldFooter button{font-size:10px;padding:2px 5px;}
+#app.compact-game-stage .goldFooter .footerTitle{font-size:clamp(13px,1.5vw,19px);}
+/* Tall portrait phones rotate the game. On very narrow portrait screens make
+   the row controls smaller, rather than relying on @media(max-height:...) which
+   tests the *unrotated* phone height. */
+#app.ultra-compact-game-stage .gameShell{grid-template-rows:34px minmax(0,1fr) 45px 25px;}
+#app.ultra-compact-game-stage .roomBody{grid-template-rows:minmax(0,.95fr) minmax(0,.8fr) minmax(0,1.5fr);}
+#app.ultra-compact-game-stage .heroDetails .hand{padding-top:2px;}
+#app.ultra-compact-game-stage .heroDetails>div:last-child{display:none;}
+#app.ultra-compact-game-stage .heroDetails .eval{font-size:9px;}
+#app.ultra-compact-game-stage .betDock .action{font-size:11px;}
+#app.ultra-compact-game-stage .betDock .action small{font-size:9px;}
