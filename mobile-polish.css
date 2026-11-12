@@ -68,3 +68,29 @@
  .roomSeat .chipUnder{font-size:9px}
  .goldFooter .footerTitle{display:none}
 }
+
+/* 2026-11-12: Keep central pot within its two-row grid cell; separate opponent status from lower panels. */
+.roomBody .potZone{min-height:0;min-width:0;overflow:hidden;justify-content:center;gap:clamp(2px,.35vw,5px);padding:1px 0}
+.roomBody .potZone .tableLogo{flex:0 0 auto;font-size:clamp(20px,2.95vw,46px);line-height:.94;max-width:100%;margin:0}
+.roomBody .potZone .tableLogo:before{font-size:.42em;line-height:.82}
+.roomBody .potZone .tableLogo:after{display:none}
+.roomBody .potZone .tableLogo small{font-size:clamp(8px,.85vw,12px);line-height:1.05;margin:0 0 1px}
+.roomBody .potZone .tableLogo em{font-size:clamp(9px,.9vw,12px);line-height:1.1;margin:2px auto 0;padding:1px 8px}
+.roomBody .potZone .potInfo{flex:0 0 auto;max-width:100%;margin:0}
+.roomBody .potZone .roundLine{flex:0 0 auto;max-width:100%;line-height:1.1;margin:0}
+.roomSeat .seatGrid{min-height:0;overflow:hidden}
+.roomSeat .chipUnder{font-size:clamp(10px,1.28vw,18px);line-height:1.05}
+.roomSeat .seatStatus{min-height:0;max-height:18px;line-height:1;align-items:center}
+.roomSeat .seatStatus .playStatus,.roomSeat .seatStatus .exchangeBadge{line-height:1.05;padding-top:1px;padding-bottom:1px}
+@media(max-height:760px){.roomBody .potZone .premiumChips{display:none}}
+@media(max-height:500px){
+ .roomBody .potZone{gap:2px}
+ .roomBody .potZone .tableLogo{font-size:clamp(18px,2.6vw,29px)}
+ .roomBody .potZone .tableLogo:before{font-size:.35em;line-height:.75}
+ .roomBody .potZone .tableLogo small{font-size:8px}
+ .roomBody .potZone .tableLogo em{font-size:8px;padding:0 7px;margin-top:1px}
+ .roomBody .potZone .roundLine{font-size:clamp(9px,1vw,11px);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .roomBody .potZone .potInfo{font-size:clamp(10px,1.08vw,12px);padding:2px 4px}
+ .roomSeat .seatStatus{max-height:14px}
+ .roomSeat .chipUnder{font-size:clamp(9px,1.25vw,13px)}
+}
