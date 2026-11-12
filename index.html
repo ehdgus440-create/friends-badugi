@@ -689,9 +689,10 @@ function startHand(){clearTimeout(autoTimer);clearTurnTimer();state.handNo++;sta
 const eligible=state.players.filter(p=>p.inHand);if(eligible.length<2){renderGame();showRebuyModal();return}
 for(const p of eligible){const a=Math.min(state.ante,p.chips);p.chips-=a;state.pot+=a;p.contrib+=a}
 for(let k=0;k<4;k++)for(const p of eligible)p.hand.push(drawOne());
-state.stage='bet0';say(`새 판입니다. 첫 베팅을 시작합니다.`);startBetRound();}
+state.stage='bet0';say(`새 판입니다. 선은 ${state.players[state.dealer]?.name||'첫 플레이어'}님입니다. 왼쪽 순서로 첫 베팅을 시작합니다.`);startBetRound();}
 function drawOne(){if(!state.deck.length){state.deck=shuffle(state.discard.splice(0));}return state.deck.pop()}
-function nextSeat(from,pred){for(let k=1;k<=state.players.length;k++){const i=(from-k+state.players.length)%state.players.length;if(pred(state.players[i],i))return i}return -1}
+// Seats progress to the player's left: +1 in circular seat order.
+function nextSeat(from,pred){for(let k=1;k<=state.players.length;k++){const i=(from+k)%state.players.length;if(pred(state.players[i],i))return i}return -1}
 function firstAfterDealer(pred){return pred(state.players[state.dealer],state.dealer)?state.dealer:nextSeat(state.dealer,pred)}
 function startBetRound(){state.players.forEach(p=>p.roundBet=0);state.currentBet=0;state.pending=new Set(state.players.filter(p=>p.inHand&&!p.folded&&p.chips>0).map(p=>p.seat));state.activeSeat=firstAfterDealer((p,i)=>state.pending.has(i));privacyLocked=state.mode==='local';armTurnTimer();renderGame();driveBots();}
 function startDrawRound(){state.players.forEach(p=>p.lastDraw='');state.pending=new Set(state.players.filter(p=>p.inHand&&!p.folded).map(p=>p.seat));state.activeSeat=firstAfterDealer((p,i)=>state.pending.has(i));privacyLocked=state.mode==='local';selected.clear();armTurnTimer();say(`${stageLabel()}입니다. 바꿀 카드를 선택하세요.`);renderGame();driveBots();}
@@ -771,8 +772,12 @@ function renderGame(){
  const exchangeBadge=q.lastDraw?`<span class="exchangeBadge">${q.lastDraw}</span>`:isDraw()&&started?'<span class="exchangeBadge pendingBadge">교환 대기</span>':'';
  return `<div class="roomSeat ${state.stage==='showdown'&&state.winners.includes(q.seat)?'seatWinner':''} ${isCurrent?'turn':''} ${q.folded?'out':''}">${q.seat===state.dealer?'<span class="dealerBadge">BOSS · 선</span>':''}<div class="seatGrid"><div class="cutRail" aria-label="아침 점심 저녁 카드 교환 기록">${cutRail}</div><div class="largeCards">${cards}</div><div class="avatarSide"><span class="avatarFace portrait portrait${q.seat%5}" aria-label="플레이어 캐릭터"></span><span class="playerName" title="${q.name}">${q.name}${q.isBot?' 🤖':''}</span></div><div class="chipUnder" aria-label="보유 칩">${q.chips.toLocaleString()} 칩</div><div class="seatStatus"><span class="playStatus">${status}</span>${exchangeBadge}</div></div></div>`;
  };
- const opps=state.players.filter(q=>q.seat!==human.seat);
- const placeholders=Array.from({length:4},(_,i)=>opps[i]||null);
+ // Display clockwise around the oval from the human player's bottom seat:
+ // lower-left (+1) → upper-left (+2) → upper-right (+3) → lower-right (+4).
+ // The four grid slots are upper-left, upper-right, lower-left, lower-right.
+ const relativeSlots=[2,3,1,4];
+ const placeholders=relativeSlots.map(offset=>state.players[(human.seat+offset)%5]||null)
+   .map(q=>q&&q.seat!==human.seat?q:null);
  const myCards=human.hand.length?(heroIsBot?handBacks():human.hand.map(c=>cardHtml(c)).join('')):'';
  const message=state.stage==='showdown'?`쇼다운! ${state.countdown}초 후 다음 판`:isDraw()?'교환할 카드를 선택하세요':`${p?.name||'-'} 차례 · ${stageLabel()}`;
  const clockHtml=state.stage==='showdown'?'':` <span class="turnCountdown">⏱ <b id="turnClock">${Math.max(0,state.turnLeft??TURN_LIMIT)}초</b></span>`;
@@ -784,8 +789,8 @@ function renderGame(){
  ${seatView(placeholders[2])}
  ${seatView(placeholders[3])}
  <div class="potZone"><div class="tableLogo"><small>♣ 친구들끼리 ♣</small>바둑이<em>Badugi</em></div><div class="chipPile premiumChips" aria-label="중앙 게임 칩"></div><div class="roundLine">${message}${clockHtml}</div><div class="potInfo"><div class="potLine"><span>총 팟 (Pot)</span><b>${state.pot.toLocaleString()} 칩</b></div><div class="potLine"><span>콜 금액</span><strong>${toCall.toLocaleString()} 칩</strong></div></div></div>
- <div class="roomInfo"><div class="infoBox"><strong>◆ 게임정보</strong><div>이번 판 : ${state.handNo} 판</div><div>참가 인원 : ${state.players.length} / 5</div><div>선 : ${state.players[state.dealer]?.name||'-'}</div><div>단계 : ${stageLabel()}</div></div></div>
- <div class="heroPlayer"><div class="heroAvatar portrait portrait4" aria-label="내 캐릭터"></div><div class="heroDetails"><div class="who">${human.name}${showTurn&&human.seat===state.activeSeat?' · 내 차례':''}</div><div class="hand">${myCards||'<span>다음 판 카드 대기</span>'}</div><div class="eval">${ev?`현재 족보 <b>${ev.text}</b>`:'카드 대기중'}</div><div style="font-size:11px;color:#e9d8ae">보유 ${human.chips.toLocaleString()}칩 · ${human.lastDraw||stageLabel()}</div></div></div>
+ <div class="roomInfo"><div class="infoBox"><strong>◆ 게임정보</strong><div>이번 판 : ${state.handNo} 판</div><div>참가 인원 : ${state.players.length} / 5</div><div>선 : ${state.players[state.dealer]?.name||'-'} · ← 왼쪽</div><div>단계 : ${stageLabel()}</div></div></div>
+ <div class="heroPlayer"><div class="heroAvatar portrait portrait4" aria-label="내 캐릭터"></div><div class="heroDetails"><div class="who">${human.seat===state.dealer?'👑 선 · ':''}${human.name}${showTurn&&human.seat===state.activeSeat?' · 내 차례':''}</div><div class="hand">${myCards||'<span>다음 판 카드 대기</span>'}</div><div class="eval">${ev?`현재 족보 <b>${ev.text}</b>`:'카드 대기중'}</div><div style="font-size:11px;color:#e9d8ae">보유 ${human.chips.toLocaleString()}칩 · ${human.lastDraw||stageLabel()}</div></div></div>
  <div class="chatArea"><div class="chatTabs"><span>전체</span><span>방채팅</span><span>공지</span></div><div class="chatLines" id="chatLines"><div>📣 친구들끼리 바둑이에 오신 걸 환영합니다!</div><div>🃏 ${stageLabel()} 진행 중</div><div>💰 전원 시작금 ${state.ante}칩 납부</div><div>🎯 선부터 왼쪽으로 진행합니다</div>${state.players.map(q=>`<div>${q.name} : ${q.lastDraw||'참가 중'}</div>`).join('')}</div><div class="chatInput"><input id="chatText" placeholder="메시지를 입력하세요"><button id="sendChat">전송</button></div></div>
  </main>
  <div class="betDock" id="betDock">${state.stage==='showdown'?`<button class="action primary" id="nextHand">다음 판 (${state.countdown}초)</button>${state.players.some(q=>q.chips<=0)?'<button class="action" id="rebuyAll">리바인 +1,000</button>':''}`:showTurn&&activeHuman?(isDraw()?`<button class="action" id="draw">${selected.size===0?'스테이':selected.size===1?'원카':selected.size===2?'투카':selected.size===3?'쓰리카':'박스'}<small>선택 완료</small></button><button class="action primary" id="drawConfirm">교환 확정</button>`:`<button class="action danger" id="fold">폴드</button><button class="action" id="call" data-a="${toCall?'call':'check'}">${toCall?'콜':'체크'}<small>${toCall?Math.min(toCall,p.chips).toLocaleString()+'칩':'베팅 없음'}</small></button><button class="action primary" id="ping" ${p.chips<=toCall?'disabled':''}>삥<small>+${state.ante.toLocaleString()}</small></button><button class="action primary" id="half" ${p.chips<=toCall?'disabled':''}>하프<small>+${Math.max(state.ante,Math.ceil(state.pot/2)).toLocaleString()}</small></button><button class="action primary" id="full" ${p.chips<=toCall?'disabled':''}>풀<small>+${Math.max(state.ante,state.pot).toLocaleString()}</small></button>`):`<div class="notice">${state.stage==='showdown'?'승자를 확인하세요':'다른 플레이어 차례입니다'}</div>`}</div>
