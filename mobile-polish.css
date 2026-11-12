@@ -1,0 +1,70 @@
+/* Mobile landscape polish: fit all controls and keep the table readable. */
+.goldTop{min-width:0;overflow:hidden}
+.goldTop .spacer{min-width:0;flex:1 1 0}
+.goldTop button{flex:0 0 auto;white-space:nowrap;line-height:1.15}
+.gameShell,.roomBody,.heroPlayer,.chatArea{min-height:0}
+.heroDetails .hand .card{overflow:hidden}
+.heroDetails .hand .card.selected{overflow:visible}
+.chatInput input{width:0;flex:1 1 0}
+@media (max-width:1024px) and (orientation:landscape){
+ .goldTop{padding:3px 7px;gap:clamp(3px,.6vw,7px)}
+ .goldBrand{font-size:clamp(13px,2.15vw,22px)}
+ .goldTop button{font-size:clamp(10px,1.28vw,13px);padding:5px clamp(4px,.8vw,9px)}
+ .roomLabel{font-size:clamp(9px,1.15vw,12px)}
+ .roomBody{grid-template-columns:minmax(0,1fr) minmax(0,1.06fr) minmax(0,1fr)}
+ .roomSeat .playerName{font-size:clamp(9px,1.3vw,14px)}
+ .roomSeat .cutRail{gap:1px}
+ .roomSeat .cutSlot{padding:0;line-height:1}
+ .roomSeat .seatGrid{grid-template-columns:clamp(17px,3.2vw,34px) minmax(0,1fr) clamp(32px,5.5vw,66px)}
+ .roomSeat .chipUnder{font-size:clamp(10px,1.35vw,15px)}
+ .heroDetails .who{font-size:clamp(10px,1.35vw,14px)}
+ .chatInput button{padding:2px 5px}
+ .goldFooter .footerTitle{font-size:clamp(13px,2vw,18px)}
+}
+@media (max-width:850px) and (orientation:landscape){
+ .goldTop{min-height:34px;gap:4px}
+ .roomLabel{display:none}
+ .goldBrand{font-size:clamp(12px,2.2vw,19px);overflow:hidden;text-overflow:ellipsis}
+ .goldTop button{font-size:clamp(9px,1.45vw,12px);padding:5px clamp(3px,.7vw,6px)}
+ .roomBody{gap:3px;padding:3px 4px;grid-template-rows:minmax(0,1.06fr) minmax(0,.91fr) minmax(0,1.56fr)}
+ .roomSeat{padding:2px 3px}
+ .roomSeat .seatGrid{grid-template-columns:clamp(16px,2.9vw,24px) minmax(0,1fr) clamp(29px,5.8vw,49px);column-gap:2px;grid-template-rows:minmax(30px,1fr) 12px 13px;row-gap:1px}
+ .roomSeat .cutRail{padding:0}
+ .roomSeat .cutSlot{font-size:9px;border-width:1px}
+ .roomSeat .cutNum{font-size:9px}
+ .roomSeat .chipUnder{font-size:clamp(9px,1.5vw,12px)}
+ .roomSeat .seatStatus{min-height:12px}
+ .roomSeat .seatStatus .playStatus,.roomSeat .seatStatus .exchangeBadge{font-size:9px;padding:0 4px}
+ .roomSeat .avatarFace{border-radius:5px}
+ .heroPlayer{padding:2px;gap:2px}
+ .heroAvatar{min-width:clamp(34px,7vw,58px);width:clamp(34px,7vw,58px)}
+ .heroDetails{gap:1px;padding:0}
+ .heroDetails .hand{padding-top:6px}
+ .heroDetails .hand .card{max-width:23%;padding:2px}
+ .heroDetails .hand .card .r,.heroDetails .hand .card .s{font-size:clamp(11px,2vw,17px)}
+ .heroDetails .hand .card .big{font-size:clamp(17px,3vw,27px)}
+ .chatTabs{height:22px}
+ .chatTabs span{font-size:10px;padding:2px}
+ .chatInput{height:29px}
+ .chatInput button{font-size:10px}
+ .betDock{min-height:46px;padding:4px 5px;gap:4px}
+ .betDock .action{font-size:clamp(11px,1.7vw,15px);padding:3px 1px}
+ .betDock .action small{font-size:9px}
+ .goldFooter{min-height:26px;padding:2px 6px}
+ .goldFooter button{padding:3px 7px;font-size:11px}
+}
+@media (max-width:700px) and (orientation:landscape){
+ .goldTop .goldBrand{font-size:12px;max-width:28vw}
+ .goldTop button{font-size:9px;padding:4px 3px}
+ .goldTop{padding:3px 4px;gap:3px}
+ .roomBody{grid-template-columns:minmax(0,1fr) minmax(0,1.18fr) minmax(0,1fr)}
+ .tableLogo{font-size:clamp(16px,3.1vw,22px)}
+ .potInfo{font-size:10px}
+ .heroAvatar{display:none}
+ .heroDetails .hand{padding-top:5px}
+ .chatLines{font-size:9px}
+ .roomSeat .seatGrid{grid-template-columns:15px minmax(0,1fr) 27px}
+ .roomSeat .playerName{font-size:9px}
+ .roomSeat .chipUnder{font-size:9px}
+ .goldFooter .footerTitle{display:none}
+}
