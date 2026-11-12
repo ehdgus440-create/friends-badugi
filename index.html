@@ -394,6 +394,7 @@ html,body,#app{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 }
 </style>
 <link rel="stylesheet" href="./mobile-polish.css?v=20261112-overlapfix" />
+<link rel="stylesheet" href="./stage-fit.css?v=20261112-screenfit" />
 </head>
 <body>
 <div id="app"></div>
@@ -403,6 +404,21 @@ html,body,#app{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 'use strict';
 const $=s=>document.querySelector(s);
 const app=document.getElementById('app');
+function syncBadugiStageSize(){
+ const vv=window.visualViewport;
+ const w=Math.round(vv?.width||innerWidth),h=Math.round(vv?.height||innerHeight);
+ document.documentElement.style.setProperty('--badugi-visible-width',w+'px');
+ document.documentElement.style.setProperty('--badugi-visible-height',h+'px');
+ const rotated=matchMedia('(orientation:portrait) and (max-width:900px) and (pointer:coarse)').matches;
+ const stageHeight=rotated?w:h;
+ app.classList.toggle('compact-game-stage',stageHeight<=550);
+ app.classList.toggle('ultra-compact-game-stage',stageHeight<=360);
+}
+window.addEventListener('resize',syncBadugiStageSize);
+window.visualViewport?.addEventListener('resize',syncBadugiStageSize);
+syncBadugiStageSize();
+
+
 const SUITS=[{s:'♠',red:false},{s:'♥',red:true},{s:'♦',red:true},{s:'♣',red:false}];
 const RANKS=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const STAGES=[['bet0','첫 베팅'],['draw1','아침 교환'],['bet1','아침 베팅'],['draw2','점심 교환'],['bet2','점심 베팅'],['draw3','저녁 교환'],['bet3','마지막 베팅']];
