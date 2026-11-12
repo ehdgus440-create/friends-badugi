@@ -432,6 +432,13 @@ function leaveGameRoom(){
  if(netRole==='guest')try{if(netHostConn?.open)netHostConn.send({kind:'guestLeft',seat:netOwnSeat})}catch(e){}
  renderHome();
 }
+function refreshLatestGame(){
+ const inGame=Boolean(state);
+ if(inGame && !window.confirm('진행 중인 게임이 종료되고 최신 화면을 다시 불러옵니다. 새로고침할까요?')) return;
+ const target=new URL(location.href);
+ target.searchParams.set('v',String(Date.now()));
+ location.replace(target.href);
+}
 function renderHome(){
  clearTimeout(autoTimer);autoTimer=null;state=null;selected.clear();privacyLocked=false;cleanupNetwork();
  app.innerHTML=`<div class="screen"><div class="royalHome">
@@ -441,11 +448,11 @@ function renderHome(){
  <button class="royalBtn" id="joinRoom"><span class="rbIcon">🔑</span><span class="rbText"><b>친구 방 입장</b><small>초대 코드로 접속</small></span></button>
  <button class="royalBtn" id="practice"><span class="rbIcon">🃏</span><span class="rbText"><b>AI 연습 시작</b><small>혼자서 족보 연습</small></span></button>
 </div>
- <div class="royalBottom"><button id="rules">📖 게임 규칙</button><button id="settings">⚙ 음성 설정</button><button id="install">📲 앱 설치</button></div>
+ <div class="royalBottom"><button id="rules">📖 게임 규칙</button><button id="settings">⚙ 음성 설정</button><button id="install">📲 앱 설치</button><button id="refreshHome" type="button">⟳ 새로고침</button></div>
  <div class="royalFoot">친구 초대는 인터넷 연결 필요 · 방 코드 연결은 외부 신호 중계 서비스 사용 · 가로화면 권장</div>
  </div></div>`;
  $('#createRoom').onclick=renderCreateSetup;$('#joinRoom').onclick=()=>renderJoinSetup();$('#practice').onclick=startPractice;
- $('#rules').onclick=showRules;$('#settings').onclick=showSettings;$('#install').onclick=installApp;
+ $('#rules').onclick=showRules;$('#settings').onclick=showSettings;$('#install').onclick=installApp;$('#refreshHome').onclick=refreshLatestGame;
 }
 function loadPeerSDK(){
  if(window.Peer)return Promise.resolve(true);
@@ -677,7 +684,7 @@ function renderGame(){
  const myCards=human.hand.length?(heroIsBot?handBacks():human.hand.map(c=>cardHtml(c)).join('')):'';
  const message=state.stage==='showdown'?`쇼다운! ${state.countdown}초 후 다음 판`:isDraw()?'교환할 카드를 선택하세요':`${p?.name||'-'} 차례 · ${stageLabel()}`;
  app.innerHTML=`<div class="gameShell">
- <header class="goldTop"><span class="goldBrand">♣ 친구들끼리 바둑이</span><span class="roomLabel">◆ ${netRoom||"----"}번방 ｜ ${state.players.length}/5인 ｜ 시작 ${state.ante}칩</span><div class="spacer"></div><button id="leaveRoomQuick" class="leaveRoomQuick" type="button">🚪 방나가기</button><button id="rulesQuick">📖 규칙</button><button id="settingsQuick">⚙ 설정</button><button id="menu">☰ 메뉴</button></header>
+ <header class="goldTop"><span class="goldBrand">♣ 친구들끼리 바둑이</span><span class="roomLabel">◆ ${netRoom||"----"}번방 ｜ ${state.players.length}/5인 ｜ 시작 ${state.ante}칩</span><div class="spacer"></div><button id="leaveRoomQuick" class="leaveRoomQuick" type="button">🚪 방나가기</button><button id="refreshQuick" type="button" aria-label="최신 버전 새로고침">⟳ 새로고침</button><button id="rulesQuick">📖 규칙</button><button id="settingsQuick">⚙ 설정</button><button id="menu">☰ 메뉴</button></header>
  <main class="roomBody">
  ${seatView(placeholders[0])}
  ${seatView(placeholders[1])}
@@ -690,7 +697,7 @@ function renderGame(){
  </main>
  <div class="betDock" id="betDock">${state.stage==='showdown'?`<button class="action primary" id="nextHand">다음 판 (${state.countdown}초)</button>${state.players.some(q=>q.chips<=0)?'<button class="action" id="rebuyAll">리바인 +1,000</button>':''}`:showTurn&&activeHuman?(isDraw()?`<button class="action" id="draw">${selected.size===0?'스테이':selected.size===1?'원카':selected.size===2?'투카':selected.size===3?'쓰리카':'박스'}<small>선택 완료</small></button><button class="action primary" id="drawConfirm">교환 확정</button>`:`<button class="action danger" id="fold">폴드</button><button class="action" id="call" data-a="${toCall?'call':'check'}">${toCall?'콜':'체크'}<small>${toCall?Math.min(toCall,p.chips).toLocaleString()+'칩':'베팅 없음'}</small></button><button class="action primary" id="ping" ${p.chips<=toCall?'disabled':''}>삥<small>+${state.ante.toLocaleString()}</small></button><button class="action primary" id="half" ${p.chips<=toCall?'disabled':''}>하프<small>+${Math.max(state.ante,Math.ceil(state.pot/2)).toLocaleString()}</small></button><button class="action primary" id="full" ${p.chips<=toCall?'disabled':''}>풀<small>+${Math.max(state.ante,state.pot).toLocaleString()}</small></button>`):`<div class="notice">${state.stage==='showdown'?'승자를 확인하세요':'다른 플레이어 차례입니다'}</div>`}</div>
  <footer class="goldFooter"><span>🪙 시작금 ${state.ante}칩</span><span class="footerTitle">♣ Badugi ♣</span><div><button id="menuFooter">게임설정</button></div></footer>${state.stage==='showdown'?showdownOverlay():''}</div>`;
- $('#menu').onclick=showGameMenu;$('#leaveRoomQuick').onclick=requestLeaveRoom;$('#rulesQuick').onclick=showRules;$('#settingsQuick').onclick=showSettings;$('#menuFooter').onclick=showGameMenu;
+ $('#menu').onclick=showGameMenu;$('#leaveRoomQuick').onclick=requestLeaveRoom;$('#refreshQuick').onclick=refreshLatestGame;$('#rulesQuick').onclick=showRules;$('#settingsQuick').onclick=showSettings;$('#menuFooter').onclick=showGameMenu;
 
  const send=$('#sendChat');if(send)send.onclick=()=>{const v=$('#chatText').value.trim();if(!v)return;const div=document.createElement('div');div.textContent=`${human.name}: ${v}`;$('#chatLines').appendChild(div);$('#chatLines').scrollTop=$('#chatLines').scrollHeight;$('#chatText').value=''};
  const inp=$('#chatText');if(inp)inp.onkeydown=e=>{if(e.key==='Enter')send.click()};
