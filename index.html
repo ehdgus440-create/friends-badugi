@@ -654,7 +654,7 @@ function hostAccept(conn){conn.on('data',data=>{
  const valid=(data.ids||[]).filter(id=>p.hand.some(c=>c.id===id)).slice(0,4);doDraw(p,valid);
  }
  }
- });conn.on('close',()=>{let seat=conn._seat;if(typeof seat!=='number'||!netRole)return;netGuests.delete(seat);const p=state?.players[seat];if(p&&state.stage!=='showdown'){p.folded=true;p.inHand=false;state.pending.delete(seat);if(state.activeSeat===seat)continuePending();else renderGame()}if(!state){netLobby.members[seat]='접속 종료';broadcastLobby();renderLobby()}})
+ });conn.on('close',()=>{let seat=conn._seat;if(typeof seat!=='number'||!netRole)return;netGuests.delete(seat);const p=state?.players[seat];if(p&&state.stage!=='showdown'){p.folded=true;p.inHand=false;state.pending.delete(seat);if(state.activeSeat===seat)continuePending();else renderGame()}if(!state&&netLobby){netLobby.members.splice(seat,1);const alive=[...netGuests.values()].sort((a,b)=>a._seat-b._seat);netGuests.clear();alive.forEach((c,i)=>{c._seat=i+1;netGuests.set(i+1,c);if(c.open)c.send({kind:'seatUpdate',seat:i+1,lobby:netLobby})});broadcastLobby();renderLobby()}})
 }
 function broadcastLobby(){for(const c of netGuests.values())if(c.open)c.send({kind:'lobby',lobby:netLobby})}
 function broadcastState(){if(netRole!=='host'||!state)return;for(const [seat,c] of netGuests){if(!c.open)continue;
@@ -663,6 +663,7 @@ function broadcastState(){if(netRole!=='host'||!state)return;for(const [seat,c] 
  }}
 function guestReceive(msg){if(msg?.kind==='roomClosed'){renderHome();toast('방장이 게임방을 종료했습니다.');return}
  else if(msg?.kind==='welcome'){netOwnSeat=msg.seat;netLobby=msg.lobby;renderLobby()}
+  else if(msg?.kind==='seatUpdate'){netOwnSeat=msg.seat;netLobby=msg.lobby;if(!state)renderLobby()}
  else if(msg?.kind==='lobby'){netLobby=msg.lobby;if(!state)renderLobby()}
  else if(msg?.kind==='error'){toast(msg.text);renderHome()}
  else if(msg?.kind==='game'){netOwnSeat=msg.seat;state={...msg.snapshot,pending:new Set(msg.snapshot.pending)};renderGame()}
