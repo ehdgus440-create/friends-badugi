@@ -37,7 +37,7 @@ def main():
                 friend.locator("#guestNick").fill("검증친구"+str(index+1))
                 friend.locator("#guestConnect").click()
                 friend.locator(".royalCode").wait_for(timeout=30000)
-                host.wait_for_function("(n)=>document.querySelectorAll('.royalPerson').length===n",index+2,timeout=15000)
+                host.wait_for_function("(n)=>document.querySelectorAll('.royalPerson').length===n",arg=index+2,timeout=15000)
                 friends.append(friend)
             assert host.locator(".royalPerson").count()==5
             print("PASS capacity: host and 4 friends actually entered public lobby",flush=True)
@@ -57,7 +57,7 @@ def main():
             overflow.locator("#guestNick").fill("재입장친구")
             overflow.locator("#guestConnect").click()
             overflow.locator(".royalCode").wait_for(timeout=30000)
-            host.wait_for_function("(n)=>document.querySelectorAll('.royalPerson').length===n",5,timeout=15000)
+            host.wait_for_function("(n)=>document.querySelectorAll('.royalPerson').length===n",arg=5,timeout=15000)
             assert "재입장친구" in host.locator(".royalPeople").inner_text()
             print("PASS capacity: replacement friend joined the same public room",flush=True)
             host.locator("#startOnline").click()
