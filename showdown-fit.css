@@ -1,0 +1,80 @@
+/* Showdown is sized to the real game canvas, not portrait vw/dvh.
+   Covers both ordinary landscape and the 90-degree rotated mobile game. */
+.gameShell>.showdownCurtain{
+ position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;
+ display:flex;align-items:center;justify-content:center;
+ padding:clamp(4px,.65vw,10px);overflow:hidden;
+}
+.gameShell>.showdownCurtain>.showdownStage{
+ width:min(100%,1100px);max-width:100%;max-height:100%;
+ box-sizing:border-box;min-width:0;overflow-x:hidden;overflow-y:auto;
+}
+/* #app.compact-game-stage is set from the logical canvas height.
+   Ordinary CSS @media(max-height) is wrong for portrait-rotated games. */
+#app.compact-game-stage .showdownStage{
+ height:calc(100% - 4px);display:grid;
+ grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+ grid-template-rows:min-content min-content minmax(0,1fr) min-content;
+ gap:3px 7px;align-content:stretch;padding:5px;overflow:hidden;
+}
+#app.compact-game-stage .showdownStage h2{
+ grid-column:1/-1;font-size:clamp(15px,2.5vw,23px);line-height:1.12;margin:0;
+}
+#app.compact-game-stage .showdownStage .showdownTimer{
+ grid-column:1/-1;font-size:clamp(10px,1.35vw,14px);line-height:1.1;margin:0;
+}
+#app.compact-game-stage .showdownStage .showdownWinners{
+ grid-column:1;grid-row:3;display:flex;flex-direction:column;flex-wrap:nowrap;
+ gap:3px;min-width:0;min-height:0;margin:0;overflow-y:auto;
+}
+#app.compact-game-stage .showdownStage .showdownWinner{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ flex:1 0 auto;min-width:0;max-width:100%;padding:4px;
+ box-shadow:inset 0 0 12px #f7cd6538;
+}
+#app.compact-game-stage .showdownWinnerTitle{
+ font-size:clamp(12px,1.9vw,20px);line-height:1.1;max-width:100%;
+}
+#app.compact-game-stage .showdownWinnerRank{
+ font-size:clamp(11px,1.35vw,16px);line-height:1.1;margin:2px 0;
+}
+#app.compact-game-stage .showdownStage .showdownOthers{
+ grid-column:2;grid-row:3;display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ grid-template-rows:repeat(2,minmax(0,1fr));
+ gap:4px;min-width:0;min-height:0;overflow-y:auto;
+}
+#app.compact-game-stage .showdownStage .showdownOther{
+ min-width:0;min-height:0;max-width:none;padding:3px;
+ display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:3px;overflow:hidden;
+}
+#app.compact-game-stage .showdownStage .showdownOther b{
+ display:block;font-size:clamp(9px,1.12vw,13px);line-height:1.12;
+ max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#app.compact-game-stage .showdownStage .showdownCards{
+ gap:clamp(2px,.35vw,5px);margin:2px auto;min-width:0;flex-wrap:nowrap;
+}
+#app.compact-game-stage .showdownStage .showdownWinners .card{
+ flex:0 1 auto;width:clamp(47px,6vw,66px);height:clamp(66px,8.4vw,91px);
+ min-width:0;padding:3px;
+}
+#app.compact-game-stage .showdownStage .showdownOthers .card{
+ flex:0 1 auto;width:clamp(29px,3.5vw,43px);height:clamp(41px,4.7vw,60px);
+ min-width:0;padding:2px;
+}
+#app.compact-game-stage .showdownStage .showdownCards .card .r,
+#app.compact-game-stage .showdownStage .showdownCards .card .s{
+ font-size:clamp(11px,1.55vw,17px);line-height:1;
+}
+#app.compact-game-stage .showdownStage .showdownCards .card .big{
+ font-size:clamp(15px,2.4vw,25px);
+}
+#app.compact-game-stage .showdownStage .showdownAction{
+ grid-column:1/-1;grid-row:4;justify-self:center;margin:0;
+ padding:4px 17px;font-size:12px;line-height:1.1;
+}
+#app.compact-game-stage .showdownStage:not(:has(.showdownOthers)) .showdownWinners{
+ grid-column:1/-1;
+}
