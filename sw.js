@@ -1,5 +1,5 @@
-const CACHE = 'friends-badugi-v2026-11-15-rank-first';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './mobile-polish.css', './stage-fit.css', './room-peer.js'];
+const CACHE = 'friends-badugi-v2026-11-15-showdown-screenfix';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './mobile-polish.css', './stage-fit.css', './showdown-fit.css', './room-peer.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
