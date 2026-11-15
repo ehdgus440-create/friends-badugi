@@ -133,8 +133,8 @@ async def health(_):
                              headers={'Cache-Control':'no-store'})
 
 async def remote_protocol_test():
-    """Exercise the running WebSocket transport through its public hostname."""
-    endpoint = os.environ.get('SELFTEST_WS_URL', 'wss://friends-badugi-rooms.onrender.com/ws')
+    """Exercise the running WebSocket transport on the Render instance; public tests run in GitHub Actions."""
+    endpoint = os.environ.get('SELFTEST_WS_URL', f'ws://127.0.0.1:{PORT}/ws')
     async with ClientSession(timeout=ClientTimeout(total=30)) as session:
         code = str(secrets.randbelow(9000)+1000)
         host = await session.ws_connect(endpoint, heartbeat=15)
@@ -162,7 +162,7 @@ async def remote_protocol_test():
             assert welcome['content']['seat'] == 1
             await guest.close()
             await got(host,'conn-close')
-            return {'status':'passed','scope':'public WebSocket hostname, registration, join, two-way relay, disconnect'}
+            return {'status':'passed','scope':'on-instance WebSocket registration, join, two-way relay, disconnect'}
         finally:
             await host.close()
             await guest.close()
@@ -172,10 +172,10 @@ async def check_at_start():
     await asyncio.sleep(3)
     try:
         SELFTEST = await remote_protocol_test()
-        LOG.info('Public WebSocket relay selftest PASSED: %s', SELFTEST)
+        LOG.info('On-instance WebSocket relay selftest PASSED: %s', SELFTEST)
     except Exception as error:
         SELFTEST = {'status':'failed','reason':str(error)[:200]}
-        LOG.error('Public WebSocket relay selftest failed: %s', error)
+        LOG.error('On-instance WebSocket relay selftest failed: %s', error)
 
 async def app_startup(app):
     app['selfcheck_task'] = asyncio.create_task(check_at_start())
