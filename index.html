@@ -658,7 +658,7 @@ function hostAccept(conn){conn.on('data',data=>{
 }
 function broadcastLobby(){for(const c of netGuests.values())if(c.open)c.send({kind:'lobby',lobby:netLobby})}
 function broadcastState(){if(netRole!=='host'||!state)return;for(const [seat,c] of netGuests){if(!c.open)continue;
- const snap={...state,mode:'guest',players:state.players.map(p=>({...p,hand:(state.stage==='showdown'||p.seat===seat)?p.hand:p.hand.map(()=>({id:'hidden',r:1,s:0}))})),pending:[...state.pending]};
+ const snap={...state,mode:'guest',deck:[],discard:[],players:state.players.map(p=>({...p,hand:(state.stage==='showdown'||p.seat===seat)?p.hand:p.hand.map(()=>({id:'hidden',r:1,s:0}))})),pending:[...state.pending]};
  try{c.send({kind:'game',snapshot:snap,seat})}catch(e){}
  }}
 function guestReceive(msg){if(msg?.kind==='roomClosed'){renderHome();toast('방장이 게임방을 종료했습니다.');return}
@@ -666,7 +666,7 @@ function guestReceive(msg){if(msg?.kind==='roomClosed'){renderHome();toast('방�
   else if(msg?.kind==='seatUpdate'){netOwnSeat=msg.seat;netLobby=msg.lobby;if(!state)renderLobby()}
  else if(msg?.kind==='lobby'){netLobby=msg.lobby;if(!state)renderLobby()}
  else if(msg?.kind==='error'){toast(msg.text);renderHome()}
- else if(msg?.kind==='game'){netOwnSeat=msg.seat;state={...msg.snapshot,pending:new Set(msg.snapshot.pending)};renderGame()}
+ else if(msg?.kind==='game'){netOwnSeat=msg.seat;clearInterval(turnPulse);turnPulse=null;state={...msg.snapshot,pending:new Set(msg.snapshot.pending)};if(state.stage!=='showdown'){state.turnDeadline=Date.now()+Math.max(0,state.turnLeft??TURN_LIMIT)*1000;turnPulse=setInterval(refreshTurnClock,250)}renderGame()}
 }
 function startPractice(){beginGame([{name:'나',isBot:false},{name:'민수 AI',isBot:true},{name:'지영 AI',isBot:true},{name:'철수 AI',isBot:true},{name:'수진 AI',isBot:true}],1000000,'practice',5000)}
 function beginGame(list,chips,mode,ante=5000){state={mode,players:list.map((x,i)=>({...x,chips,hand:[],folded:false,inHand:true,roundBet:0,contrib:0,lastDraw:'',drawHistory:[null,null,null],seat:i})),dealer:0,buyin:chips,handNo:0,pot:0,deck:[],discard:[],stage:'',currentBet:0,pending:new Set(),activeSeat:0,raiseUnit:ante,ante,winners:[],countdown:20};startHand()}
