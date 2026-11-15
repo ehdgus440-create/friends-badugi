@@ -25,6 +25,8 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Verify real public room create, guest join, betting, draw and showdown
         run: python tests/online_e2e.py
+      - name: Verify 5-player public room entry, rejection and rejoining
+        run: python tests/online_capacity.py
       - name: Save screenshots for review
         if: always()
         uses: actions/upload-artifact@v4
