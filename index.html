@@ -433,6 +433,12 @@ let settings;try{settings=JSON.parse(localStorage.getItem('badugiSettings')||'{"
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function freshDeck(){const d=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)d.push({s,r,id:s+'-'+r});return shuffle(d)}
 function rankText(r){return RANKS[r]}
+// Display-only sorting. Suit order: ♠ (0), ♥ (1), ♦ (2), ♣ (3).
+// Within a suit: A (1), 2 ... K (13). Never mutate the dealt hand,
+// because the game logic and AI retain original card indices.
+function displayCards(cards){
+ return [...cards].sort((a,b)=>a.s-b.s||a.r-b.r);
+}
 function cardHtml(c,small=false){const su=SUITS[c.s];const picked=!small&&isDraw()&&selected.has(c.id);return `<div class="card ${su.red?'red':''} ${picked?'selected':''}" data-id="${c.id}" ${picked?'aria-pressed="true"':'aria-pressed="false"'} role="button" tabindex="0" aria-label="${rankText(c.r)} ${su.s} ${picked?'교환 선택됨':'교환 선택 가능'}"><div class="r">${rankText(c.r)}</div><div class="s">${su.s}</div><div class="big">${su.s}</div></div>`}
 function bestBadugi(cards){
   let best=null;
@@ -724,14 +730,14 @@ function announceShowdown(){
  const winners=state.winners.map(i=>state.players[i]).filter(Boolean);
  if(!winners.length)return;
  const readCard=c=>`${SUITS[c.s].s==='♠'?'스페이드':SUITS[c.s].s==='♥'?'하트':SUITS[c.s].s==='♦'?'다이아몬드':'클로버'} ${rankText(c.r)==='A'?'에이스':rankText(c.r)}`;
- const details=winners.map(p=>`${p.name}님, ${bestBadugi(p.hand).text}. 승리 카드 ${p.hand.map(readCard).join(', ')}`).join('. ');
+ const details=winners.map(p=>`${p.name}님, ${bestBadugi(p.hand).text}. 승리 카드 ${displayCards(p.hand).map(readCard).join(', ')}`).join('. ');
  say(`쇼다운. ${winners.length>1?'공동 승리입니다.':'승리자가 결정되었습니다.'} ${details}. 20초 동안 결과를 확인하세요.`);
 }
 function showdownOverlay(){
  const live=state.players.filter(p=>p.inHand&&!p.folded&&p.hand.length===4);
  const winners=live.filter(p=>state.winners.includes(p.seat));
  const others=live.filter(p=>!state.winners.includes(p.seat));
- const cards=p=>`<div class="showdownCards">${p.hand.map(c=>cardHtml(c,true)).join('')}</div>`;
+ const cards=p=>`<div class="showdownCards">${displayCards(p.hand).map(c=>cardHtml(c,true)).join('')}</div>`;
  return `<section class="showdownCurtain" role="dialog" aria-label="쇼다운 결과"><div class="showdownStage"><h2>🏆 쇼다운 · 승부 결과</h2><div class="showdownTimer">${state.countdown}초 동안 카드 공개 · 다음 판 자동 시작</div><div class="showdownWinners">${winners.map(p=>`<div class="showdownWinner"><div class="showdownWinnerTitle">🏆 ${p.name} 승리!</div><div class="showdownWinnerRank">${bestBadugi(p.hand).text}${state.wonBySeat?.[p.seat]?` · +${state.wonBySeat[p.seat].toLocaleString()}칩`:''}</div>${cards(p)}</div>`).join('')}</div>${others.length?`<div class="showdownOthers">${others.map(p=>`<div class="showdownOther"><b>${p.name} · ${bestBadugi(p.hand).text}</b>${cards(p)}</div>`).join('')}</div>`:''}<button id="showdownSkip" class="showdownAction">다음 판 바로 시작</button></div></section>`;
 }
 function startAutoNext(){clearTurnTimer();state.countdown=20;clearTimeout(autoTimer);const tick=()=>{if(!state||state.stage!=='showdown')return;state.countdown--;if(state.countdown<=0){state.dealer=nextSeat(state.dealer,p=>p.chips>0);startHand();return}renderGame();autoTimer=setTimeout(tick,1000)};autoTimer=setTimeout(tick,1000)}
@@ -749,7 +755,7 @@ function renderGame(){
  const isCurrent=showTurn&&q.seat===state.activeSeat;
  const started=q.inHand&&q.hand.length===4;
  const reveal=started&&state.stage==='showdown'&&!q.folded;
- const cards=reveal?`<div class="sdHand">${q.hand.map(c=>cardHtml(c,true)).join('')}</div>`:handBacks();
+ const cards=reveal?`<div class="sdHand">${displayCards(q.hand).map(c=>cardHtml(c,true)).join('')}</div>`:handBacks();
  const drawIndex=isDraw()?Number(state.stage.slice(-1))-1:-1;
  const drawHistory=q.drawHistory||[null,null,null];
  const cutRail=drawHistory.map((n,i)=>`<div class="cutSlot ${n===null?'': 'cutDone'} ${i===drawIndex?'cutNow':''}" title="${['아침','점심','저녁'][i]}: ${n===null?'미진행':n+'장 교환'}"><span class="cutDay">${['아침','점심','저녁'][i]}</span><span class="cutNum">${n===null?'–':n===0?'스테이':n===1?'원카':n===2?'투카':n===3?'쓰리카':'박스'}</span></div>`).join('');
@@ -763,7 +769,7 @@ function renderGame(){
  const relativeSlots=[2,3,1,4];
  const placeholders=relativeSlots.map(offset=>state.players[(human.seat+offset)%5]||null)
    .map(q=>q&&q.seat!==human.seat?q:null);
- const myCards=human.hand.length?(heroIsBot?handBacks():human.hand.map(c=>cardHtml(c)).join('')):'';
+ const myCards=human.hand.length?(heroIsBot?handBacks():displayCards(human.hand).map(c=>cardHtml(c)).join('')):'';
  const message=state.stage==='showdown'?`쇼다운! ${state.countdown}초 후 다음 판`:isDraw()?'교환할 카드를 선택하세요':`${p?.name||'-'} 차례 · ${stageLabel()}`;
  const clockHtml=state.stage==='showdown'?'':` <span class="turnCountdown">⏱ <b id="turnClock">${Math.max(0,state.turnLeft??TURN_LIMIT)}초</b></span>`;
  app.innerHTML=`<div class="gameShell">
@@ -796,11 +802,11 @@ function renderGame(){
 function stageProgressIndex(){if(state.stage==='showdown')return 99;return STAGES.findIndex(x=>x[0]===state.stage)}
 function turnHtml(show){if(!show)return `<div class="turnPanel"><div class="notice">진행할 플레이어를 찾는 중...</div></div>`;const p=state.players[state.activeSeat],ev=bestBadugi(p.hand),toCall=Math.max(0,state.currentBet-p.roundBet);return `<div class="turnPanel">
 <div class="turnTitle"><b>${p.name} 차례</b><span>${p.isBot?'AI가 생각 중입니다':'내 카드와 족보'}</span></div>
-<div class="hand">${p.isBot?['?','?','?','?'].map(()=>`<div class="card" style="background:repeating-linear-gradient(45deg,#123e7a 0 7px,#e9f1ff 7px 10px);border:2px solid white"></div>`).join(''):p.hand.map(c=>cardHtml(c)).join('')}</div>
+<div class="hand">${p.isBot?['?','?','?','?'].map(()=>`<div class="card" style="background:repeating-linear-gradient(45deg,#123e7a 0 7px,#e9f1ff 7px 10px);border:2px solid white"></div>`).join(''):displayCards(p.hand).map(c=>cardHtml(c)).join('')}</div>
 ${p.isBot?'':`<div class="eval">현재 최선 족보 <b>${ev.text}</b> · 유효 ${ev.size}장</div>`}
 ${p.isBot?`<div class="notice">AI가 선택하고 있습니다…</div>`:isDraw()?`<div class="actions two"><button class="action" id="draw">${selected.size?selected.size+'장 교환':'스테이'}</button><button class="action primary" onclick="document.getElementById('draw').click()">확정</button></div>`:`<div class="actions"><button class="action danger" id="fold">폴드</button><button class="action" id="call" data-a="${toCall?'call':'check'}">${toCall?'콜 '+Math.min(toCall,p.chips):'체크'}</button><button class="action primary" id="ping" ${p.chips<=toCall?'disabled':''}>삥 +${state.ante}</button><button class="action" id="half" ${p.chips<=toCall?'disabled':''}>하프 +${Math.max(state.ante,Math.ceil(state.pot/2))}</button><button class="action primary" id="full" ${p.chips<=toCall?'disabled':''}>풀 +${Math.max(state.ante,state.pot)}</button></div>`}
 </div>`}
-function showdownHtml(){const live=state.players.filter(p=>p.inHand&&!p.folded);const bust=state.players.some(p=>p.chips<=0);return `<div class="turnPanel"><div class="turnTitle"><b>쇼다운</b><span>${state.countdown}초 후 다음 판 자동 시작</span></div><div class="showdownList">${live.map(p=>{const ev=bestBadugi(p.hand),win=state.winners.includes(p.seat);return `<div class="showdown ${win?'win':''}"><div class="sdTop"><b>${win?'🏆 ':''}${p.name}${state.wonBySeat?.[p.seat]?` +${state.wonBySeat[p.seat]}`:''}</b><span>${ev.text}</span></div><div class="sdHand">${p.hand.map(c=>cardHtml(c,true)).join('')}</div></div>`}).join('')}</div><div class="actions ${bust?'':'two'}" style="margin-top:10px">${bust?'<button class="action" id="rebuyAll">리바인 +1000</button>':''}<button class="action primary" id="nextHand">다음 판 바로 시작</button></div></div>`}
+function showdownHtml(){const live=state.players.filter(p=>p.inHand&&!p.folded);const bust=state.players.some(p=>p.chips<=0);return `<div class="turnPanel"><div class="turnTitle"><b>쇼다운</b><span>${state.countdown}초 후 다음 판 자동 시작</span></div><div class="showdownList">${live.map(p=>{const ev=bestBadugi(p.hand),win=state.winners.includes(p.seat);return `<div class="showdown ${win?'win':''}"><div class="sdTop"><b>${win?'🏆 ':''}${p.name}${state.wonBySeat?.[p.seat]?` +${state.wonBySeat[p.seat]}`:''}</b><span>${ev.text}</span></div><div class="sdHand">${displayCards(p.hand).map(c=>cardHtml(c,true)).join('')}</div></div>`}).join('')}</div><div class="actions ${bust?'':'two'}" style="margin-top:10px">${bust?'<button class="action" id="rebuyAll">리바인 +1000</button>':''}<button class="action primary" id="nextHand">다음 판 바로 시작</button></div></div>`}
 function showPrivacy(){const p=state.players[state.activeSeat];const o=document.createElement('div');o.className='overlay';o.innerHTML=`<div class="overlayCard"><div class="avatar">🙈</div><h2>${p.name} 차례</h2><p>다른 사람에게 화면을 넘긴 뒤, 본인만 보일 때 카드를 확인하세요.</p><button class="bigbtn" id="unlock" style="width:100%">내 카드 보기</button></div>`;app.appendChild(o);$('#unlock').onclick=()=>{privacyLocked=false;o.remove();say(`${p.name}님 차례입니다.`)}}
 function showRules(){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="modalBox"><div class="modalHeader"><h2>바둑이 족보 · 규칙</h2><button class="close">×</button></div>
 <div class="panel" style="box-shadow:none"><div class="ruleRank"><b>골프</b><span>A 2 3 4, 모두 다른 무늬</span><b>세컨드</b><span>A 2 3 5, 모두 다른 무늬</span><b>써드</b><span>A 2 4 5, 모두 다른 무늬</span><b>메이드</b><span>4장 모두 숫자·무늬가 서로 다름</span><b>베이스</b><span>유효한 서로 다른 카드 3장</span><b>투베이스</b><span>유효한 서로 다른 카드 2장</span></div><p style="margin-top:12px">A가 가장 낮습니다. 같은 단계에서는 가장 높은 숫자부터 비교해 더 낮은 쪽이 승리합니다. 무늬의 강약은 없습니다. 숫자까지 같으면 판돈을 나눕니다.</p></div>
