@@ -1,5 +1,5 @@
-const CACHE = 'friends-badugi-v2026-11-12-screenfit';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './mobile-polish.css', './stage-fit.css'];
+const CACHE = 'friends-badugi-v2026-11-15-multiplayer';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './mobile-polish.css', './stage-fit.css', './room-peer.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
