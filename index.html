@@ -398,7 +398,8 @@ html,body,#app{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </head>
 <body>
 <div id="app"></div>
-<!-- PeerJS is loaded on demand with a fallback CDN. -->
+<script src="./room-peer.js?v=20261115-connect"></script>
+<!-- WebSocket game-room relay; no WebRTC/PeerJS CDN needed. -->
 <script>
 (()=>{
 'use strict';
@@ -546,24 +547,7 @@ function renderHome(){
  $('#createRoom').onclick=renderCreateSetup;$('#joinRoom').onclick=()=>renderJoinSetup();$('#practice').onclick=startPractice;
  $('#rules').onclick=showRules;$('#settings').onclick=showSettings;$('#install').onclick=installApp;$('#refreshHome').onclick=refreshLatestGame;
 }
-function loadPeerSDK(){
- if(window.Peer)return Promise.resolve(true);
- if(peerLoadPromise)return peerLoadPromise;
- const urls=['https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js'];
- peerLoadPromise=new Promise(resolve=>{
-  let index=0;
-  const next=()=>{
-   if(window.Peer){resolve(true);return}
-   if(index>=urls.length){resolve(false);return}
-   const script=document.createElement('script');script.src=urls[index++];script.async=true;
-   const timer=setTimeout(()=>{script.onload=script.onerror=null;script.remove();next()},6500);
-   script.onload=()=>{clearTimeout(timer);resolve(!!window.Peer)};
-   script.onerror=()=>{clearTimeout(timer);script.remove();next()};
-   document.head.appendChild(script);
-  };next();
- }).finally(()=>{peerLoadPromise=null});
- return peerLoadPromise;
-}
+function loadPeerSDK(){return Promise.resolve(Boolean(window.BadugiRoomPeer&&window.WebSocket))}
 function showConnectionScreen(title,description){
  app.innerHTML=`<div class="screen"><div class="royalPanel"><h2 id="connectTitle">🔐 ${title}</h2><p id="connectDescription" style="line-height:1.8">${description}</p><p style="font-size:12px;color:#d3b986">온라인 방은 인터넷 및 외부 연결 서비스가 필요합니다. 파일을 열기만 해서는 친구 휴대폰에서 같은 주소로 접속할 수 없습니다.</p><button class="smallbtn" id="cancelConnecting" style="width:100%;margin-top:14px">← 연결 취소 · 홈으로</button></div></div>`;
  $('#cancelConnecting').onclick=renderHome;
@@ -580,7 +564,7 @@ function startConnectionDeadline(id,role,retry){
   if(id!==netAttemptId)return;
   if(role==='host'&&netRole==='host'&&!netPeer?.open)connectionFailed('방 등록 서버가 응답하지 않습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.',retry);
   if(role==='guest'&&netRole==='guest'&&!netLobby&&!state)connectionFailed('해당 방에 연결하지 못했습니다. 방장이 방을 열어 두었는지, 4자리 코드를 확인해 주세요.',retry);
- },14000);
+ },80000);
 }
 
 function safeName(t){return (t||'친구').trim().slice(0,12).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -597,10 +581,10 @@ async function copyInvite(){const url=getInviteLink(netRoom);try{await navigator
 async function shareInvite(){const url=getInviteLink(netRoom);const content=`친구들끼리 바둑이 초대! 방 코드 ${netRoom}\n${url}`;if(navigator.share){try{await navigator.share({title:'친구들끼리 바둑이 친구 초대',text:content})}catch(e){}}else{try{await navigator.clipboard.writeText(content);toast('초대 문구를 복사했습니다.')}catch(e){prompt('초대 문구 복사',content)}}}
 async function createOnlineRoom(){
  const nick=safeName($('#hostNick')?.value||'방장');const chips=+($('#hostChips')?.value||1000000),ante=+($('#hostAnte')?.value||5000);
- showConnectionScreen('게임방 연결 중…','연결 모듈을 확인하고 4자리 방 코드를 등록합니다.');
+ showConnectionScreen('게임방 연결 중…','인터넷 게임방 서버에 접속해 4자리 코드를 등록합니다.');
  const id=++netAttemptId;
  if(!await loadPeerSDK()){
-  if(id===netAttemptId)connectionFailed('연결 모듈을 다운로드하지 못했습니다. 인터넷 또는 CDN 차단 여부를 확인해 주세요.',renderCreateSetup);return;
+  if(id===netAttemptId)connectionFailed('게임방 연결 기능을 불러오지 못했습니다. 새로고침해 주세요.',renderCreateSetup);return;
  }
  if(id!==netAttemptId)return;
  netName=nick;netRole='host';netLobby={members:[nick],chips,ante};
@@ -608,7 +592,7 @@ async function createOnlineRoom(){
  const registerRoom=()=>{
   if(id!==netAttemptId)return;
   netRoom=String(1000+Math.floor(Math.random()*9000));
-  try{netPeer=new Peer('badugi222-'+netRoom,{debug:0})}
+  try{netPeer=new BadugiRoomPeer('badugi222-'+netRoom,{debug:0})}
   catch(e){connectionFailed('연결 모듈을 시작하지 못했습니다.',renderCreateSetup);return}
   const current=netPeer;
   current.on('open',()=>{
@@ -630,14 +614,14 @@ async function joinOnlineRoom(){
  const code=($('#roomCode')?.value||'').replace(/\D/g,'').slice(0,4);
  if(!/^\d{4}$/.test(code)){toast('4자리 방 코드를 입력해 주세요.');return}
  const nick=safeName($('#guestNick')?.value||'친구');
- showConnectionScreen('친구 방 연결 중…','방장에게 연결하고 있습니다. 연결이 실패하면 이유를 안내합니다.');
+ showConnectionScreen('친구 방 연결 중…','방장에게 연결하고 있습니다. 서버 첫 연결에는 최대 80초 정도 걸릴 수 있습니다.');
  const id=++netAttemptId;
  if(!await loadPeerSDK()){
-  if(id===netAttemptId)connectionFailed('연결 모듈을 가져오지 못했습니다. 인터넷을 확인해 주세요.',()=>renderJoinSetup(code));return;
+  if(id===netAttemptId)connectionFailed('게임방 연결 기능을 불러오지 못했습니다. 새로고침해 주세요.',()=>renderJoinSetup(code));return;
  }
  if(id!==netAttemptId)return;
  netRoom=code;netName=nick;netRole='guest';
- try{netPeer=new Peer(undefined,{debug:0})}
+ try{netPeer=new BadugiRoomPeer(undefined,{debug:0})}
  catch(e){connectionFailed('연결 시작에 실패했습니다.',()=>renderJoinSetup(code));return}
  const current=netPeer;
  current.on('open',()=>{
@@ -647,7 +631,7 @@ async function joinOnlineRoom(){
   conn.on('open',()=>{if(id===netAttemptId)conn.send({kind:'hello',name:netName})});
   conn.on('data',m=>{if(id===netAttemptId){if(m?.kind==='welcome'){clearTimeout(netConnectTimer);netConnectTimer=null}guestReceive(m)}});
   conn.on('close',()=>{if(id!==netAttemptId||netLeaving)return; if(!netLobby&&!state)connectionFailed('방장과 연결이 되지 않았습니다. 방 번호와 방장 접속 상태를 확인해 주세요.',()=>renderJoinSetup(code));else{renderHome();toast('방장 연결이 종료되었습니다.')}});
-  conn.on('error',()=>{if(id===netAttemptId)connectionFailed('방장과 연결하지 못했습니다. 방 번호를 확인해 주세요.',()=>renderJoinSetup(code))});
+  conn.on('error',e=>{if(id===netAttemptId)connectionFailed(e?.type==='peer-unavailable'?'열린 방을 찾지 못했습니다. 방장에게 4자리 코드를 다시 확인해 주세요.':e?.type==='room-full'?'게임방 정원 5명이 가득 찼습니다.':'방 연결 오류 ('+(e?.type||'network')+'). 다시 시도해 주세요.',()=>renderJoinSetup(code))});
  });
  current.on('error',e=>{if(id===netAttemptId)connectionFailed('연결 서버 오류 ('+(e?.type||'unknown')+'). 다시 시도해 주세요.',()=>renderJoinSetup(code))});
  startConnectionDeadline(id,'guest',()=>renderJoinSetup(code));
